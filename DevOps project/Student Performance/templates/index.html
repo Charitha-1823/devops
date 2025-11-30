@@ -1,92 +1,207 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Performance Analyzer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Performance Analyzer</title>
 
-    <style>
-        body {
-            background: #121212;
-            color: white;
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            text-align: center;
-        }
+  <style>
+    :root{
+      --bg:#0d1117;
+      --card:#161b22;
+      --muted:#8b949e;
+      --text:#c9d1d9;
+      --accent:#58a6ff;
+      --accent-2:#238636;
+      --border:#30363d;
+    }
 
-        .card {
-            background: #1e1e1e;
-            width: 500px;
-            margin: 0 auto;
-            padding: 35px;
-            border-radius: 15px;
-        }
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:Inter, Arial, sans-serif;
+      display:flex;
+      justify-content:center;
+      padding:30px;
+    }
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-        }
+    .container{
+      max-width:850px;
+      width:100%;
+      background:var(--card);
+      padding:22px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.06);
+      box-shadow:0 0 20px rgba(0,0,0,0.4);
+    }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            font-size: 18px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
+    h1{
+      text-align:center;
+      color:var(--accent);
+      margin-bottom:10px;
+    }
 
-        button:hover {
-            background: #218838;
-        }
+    .intro{
+      text-align:center;
+      color:var(--muted);
+      margin-bottom:20px;
+      font-size:0.95rem;
+    }
 
-        .output {
-            margin-top: 25px;
-            background: #222;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: left;
-        }
-    </style>
+    form{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+      margin-bottom:20px;
+    }
 
+    label{
+      display:block;
+      margin-bottom:6px;
+      color:var(--muted);
+    }
+
+    input[type="number"]{
+      width:100%;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid var(--border);
+      background:#0d1117;
+      color:var(--text);
+    }
+
+    .btn{
+      grid-column:1/-1;
+      padding:12px;
+      background:var(--accent-2);
+      color:white;
+      border:none;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      width:180px;
+      justify-self:center;
+    }
+
+    .card{
+      background:#1b222c;
+      padding:20px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      margin-top:20px;
+    }
+
+    .title{
+      text-align:center;
+      color:var(--accent);
+      font-size:1.2rem;
+      font-weight:bold;
+      margin-bottom:16px;
+    }
+
+    .predicted-label{
+      text-align:center;
+      font-weight:700;
+      padding:8px 20px;
+      border-radius:999px;
+      color:white;
+      display:inline-block;
+      background:rgba(88,166,255,0.15);
+      border:1px solid rgba(255,255,255,0.05);
+      margin-bottom:20px;
+    }
+
+    h3{
+      color:var(--accent);
+      margin-top:18px;
+      margin-bottom:8px;
+    }
+
+    ul{
+      margin:0;
+      padding-left:18px;
+    }
+
+    ul li{
+      margin-bottom:8px;
+      background:rgba(255,255,255,0.03);
+      padding:8px 10px;
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,0.05);
+    }
+  </style>
 </head>
 
 <body>
+<div class="container">
+  <h1>Student Performance Analyzer</h1>
+  <p class="intro">Enter student values and click Predict.</p>
 
-    <h1>Student Performance Analyzer</h1>
-    <p>Enter student values and click Predict.</p>
+  <!-- FIXED FORM: your exact UI kept, only using correct field names -->
+  <form id="predictForm">
 
-    <div class="card">
-        <form id="predictForm">
-
-            <input type="number" name="MID-I Marks(0-15)" placeholder="MID-I Marks (0-15)" required>
-
-            <input type="number" name="MID-II Marks(0-15)" placeholder="MID-II Marks (0-15)" required>
-
-            <input type="number" name="Semister Marks(0-15)" placeholder="Semester Marks (0-15)" required>
-
-            <input type="number" name="Studytime(1-5)" placeholder="Studytime (1-5)" required>
-
-            <input type="number" name="Failed(out of 3 exams)" placeholder="Failures (0-3)" required>
-
-            <input type="number" name="Absents(0-40)" placeholder="Absents (0-40)" required>
-
-            <input type="number" name="Traveltime(1-5)" placeholder="Traveltime (1-5)" required>
-
-            <input type="number" name="Freetime(1-5)" placeholder="Freetime (1-5)" required>
-
-            <button type="submit">Predict</button>
-        </form>
-
-        <div id="result" class="output" style="display:none;"></div>
+    <div>
+      <label>MID-I Marks(0-15)</label>
+      <input type="number" name="MID-I Marks(0-15)" required>
     </div>
 
+    <div>
+      <label>MID-II Marks(0-15)</label>
+      <input type="number" name="MID-II Marks(0-15)" required>
+    </div>
+
+    <div>
+      <label>Semister Marks(0-15)</label>
+      <input type="number" name="Semister Marks(0-15)" required>
+    </div>
+
+    <div>
+      <label>Studytime(1-5)</label>
+      <input type="number" name="Studytime(1-5)" required>
+    </div>
+
+    <div>
+      <label>Failed(out of 3 exams)</label>
+      <input type="number" name="Failed(out of 3 exams)" required>
+    </div>
+
+    <div>
+      <label>Absents(0-40)</label>
+      <input type="number" name="Absents(0-40)" required>
+    </div>
+
+    <div>
+      <label>Traveltime(1-5)</label>
+      <input type="number" name="Traveltime(1-5)" required>
+    </div>
+
+    <div>
+      <label>Freetime(1-5)</label>
+      <input type="number" name="Freetime(1-5)" required>
+    </div>
+
+    <button class="btn" type="submit">Predict</button>
+  </form>
+
+  <!-- RESULT CARD -->
+  <div id="resultCard" class="card" style="display:none;">
+    <div class="title">Performance Result</div>
+
+    <div style="text-align:center;">
+      <div class="predicted-label" id="predictedLabel"></div>
+    </div>
+
+    <h3>Improvement Analysis</h3>
+    <ul id="improvementsList"></ul>
+
+    <h3>Weakness Points</h3>
+    <ul id="weaknessList"></ul>
+
+    <h3>Suggestions</h3>
+    <ul id="suggestionList"></ul>
+  </div>
+
+</div>
 
 <script>
 document.getElementById("predictForm").onsubmit = async function(e){
@@ -101,20 +216,18 @@ document.getElementById("predictForm").onsubmit = async function(e){
 
     let res = await req.json();
 
-    let output = document.getElementById("result");
-    output.style.display = "block";
+    let card = document.getElementById("resultCard");
+    card.style.display = "block";
 
-    if(res.status === "error"){
-        output.innerHTML = "<b>Error:</b> " + res.message;
-        return;
-    }
+    document.getElementById("predictedLabel").innerText = res.prediction;
 
-    output.innerHTML = `
-        <h3>Prediction: ${res.prediction}</h3>
-        <p><b>Improvements:</b> ${res.improvements.join(", ")}</p>
-        <p><b>Weaknesses:</b> ${res.weaknesses.join(", ")}</p>
-        <p><b>Suggestions:</b> ${res.suggestions.join(", ")}</p>
-    `;
+    let imp = document.getElementById("improvementsList");
+    let weak = document.getElementById("weaknessList");
+    let sug = document.getElementById("suggestionList");
+
+    imp.innerHTML = res.improvements.map(i => `<li>${i}</li>`).join("");
+    weak.innerHTML = res.weaknesses.map(i => `<li>${i}</li>`).join("");
+    sug.innerHTML = res.suggestions.map(i => `<li>${i}</li>`).join("");
 };
 </script>
 
