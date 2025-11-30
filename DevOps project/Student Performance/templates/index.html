@@ -1,247 +1,122 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Student Performance Analyzer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Analyzer</title>
 
-  <style>
-    :root{
-      --bg:#0d1117;
-      --card:#161b22;
-      --muted:#8b949e;
-      --text:#c9d1d9;
-      --accent:#58a6ff;
-      --accent-2:#238636;
-      --border:#30363d;
-    }
+    <style>
+        body {
+            background: #121212;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            text-align: center;
+        }
 
-    body{
-      background:var(--bg);
-      color:var(--text);
-      font-family:Inter, Arial, sans-serif;
-      display:flex;
-      justify-content:center;
-      padding:30px;
-    }
+        .card {
+            background: #1e1e1e;
+            width: 500px;
+            margin: 0 auto;
+            padding: 35px;
+            border-radius: 15px;
+        }
 
-    .container{
-      max-width:850px;
-      width:100%;
-      background:var(--card);
-      padding:22px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,0.06);
-      box-shadow:0 0 20px rgba(0,0,0,0.4);
-    }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
 
-    h1{
-      text-align:center;
-      color:var(--accent);
-      margin-bottom:10px;
-    }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
 
-    .intro{
-      text-align:center;
-      color:var(--muted);
-      margin-bottom:20px;
-      font-size:0.95rem;
-    }
+        button:hover {
+            background: #218838;
+        }
 
-    form{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:12px;
-      margin-bottom:20px;
-    }
+        .output {
+            margin-top: 25px;
+            background: #222;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+        }
+    </style>
 
-    label{
-      display:block;
-      margin-bottom:6px;
-      color:var(--muted);
-    }
-
-    input[type="number"]{
-      width:100%;
-      padding:10px;
-      border-radius:8px;
-      border:1px solid var(--border);
-      background:#0d1117;
-      color:var(--text);
-    }
-
-    .btn{
-      grid-column:1/-1;
-      padding:12px;
-      background:var(--accent-2);
-      color:white;
-      border:none;
-      border-radius:8px;
-      font-weight:600;
-      cursor:pointer;
-      width:180px;
-      justify-self:center;
-    }
-
-    .card{
-      background:#1b222c;
-      padding:20px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      margin-top:20px;
-    }
-
-    .title{
-      text-align:center;
-      color:var(--accent);
-      font-size:1.2rem;
-      font-weight:bold;
-      margin-bottom:16px;
-    }
-
-    .predicted-label{
-      text-align:center;
-      font-weight:700;
-      padding:8px 20px;
-      border-radius:999px;
-      color:white;
-      display:inline-block;
-      background:rgba(88,166,255,0.15);
-      border:1px solid rgba(255,255,255,0.05);
-      margin-bottom:20px;
-    }
-
-    h3{
-      color:var(--accent);
-      margin-top:18px;
-      margin-bottom:8px;
-    }
-
-    ul{
-      margin:0;
-      padding-left:18px;
-    }
-
-    ul li{
-      margin-bottom:8px;
-      background:rgba(255,255,255,0.03);
-      padding:8px 10px;
-      border-radius:6px;
-      border:1px solid rgba(255,255,255,0.05);
-    }
-  </style>
 </head>
 
 <body>
-<div class="container">
-  <h1>Student Performance Analyzer</h1>
-  <p class="intro">Enter student values and click Predict.</p>
 
-  <form method="post" action="{{ url_for('predict') }}">
-    {% for f in features %}
-    <div>
-      <label>{{ f }}</label>
-      <input type="number" step="any" name="{{f}}" value="{{ input_vals[f] if input_vals and f in input_vals else '' }}">
+    <h1>Student Performance Analyzer</h1>
+    <p>Enter student values and click Predict.</p>
+
+    <div class="card">
+        <form id="predictForm">
+
+            <input type="number" name="MID-I Marks(0-15)" placeholder="MID-I Marks (0-15)" required>
+
+            <input type="number" name="MID-II Marks(0-15)" placeholder="MID-II Marks (0-15)" required>
+
+            <input type="number" name="Semister Marks(0-15)" placeholder="Semester Marks (0-15)" required>
+
+            <input type="number" name="Studytime(1-5)" placeholder="Studytime (1-5)" required>
+
+            <input type="number" name="Failed(out of 3 exams)" placeholder="Failures (0-3)" required>
+
+            <input type="number" name="Absents(0-40)" placeholder="Absents (0-40)" required>
+
+            <input type="number" name="Traveltime(1-5)" placeholder="Traveltime (1-5)" required>
+
+            <input type="number" name="Freetime(1-5)" placeholder="Freetime (1-5)" required>
+
+            <button type="submit">Predict</button>
+        </form>
+
+        <div id="result" class="output" style="display:none;"></div>
     </div>
-    {% endfor %}
-    <button class="btn" type="submit">Predict</button>
-  </form>
 
-  {% if result %}
-  <div class="card">
-    <div class="title">Performance Result</div>
-
-    <div style="text-align:center;">
-      <div class="predicted-label">{{ result.predicted_label }}</div>
-    </div>
-
-    <h3>Improvement Analysis</h3>
-    <ul>
-      {% for line in result.improvement %}
-      <li>{{ line }}</li>
-      {% endfor %}
-    </ul>
-
-    <h3>Weakness Points</h3>
-    <ul>
-      {% for w in result.weaknesses %}
-      <li>{{ w }}</li>
-      {% endfor %}
-    </ul>
-
-<h3>Suggestions</h3>
-<ul>
-  {% for s in result.suggestions %}
-  <li>{{ s }}</li>
-  {% endfor %}
-</ul>
-
-<!-- Place for charts (inside result card) -->
-<!-- Only one chart - Feature Importance -->
-<div style="width:450px; max-width:100%; margin:25px auto;">
-  <canvas id="featureImportanceChart" style="height:260px;"></canvas>
-</div>
-
-
-</div>  <!-- THIS closes the .card -->
-{% endif %}
-</div>  <!-- THIS closes the .container -->
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  {% if result %}
+document.getElementById("predictForm").onsubmit = async function(e){
+    e.preventDefault();
 
-  fetch("{{ url_for('api_viz') }}")
-    .then(res => res.json())
-    .then(data => {
+    let formData = new FormData(this);
 
-      const fi = data.feature_importances || {};
-      const labels = Object.keys(fi);
-      const values = Object.values(fi);
-
-      if (labels.length > 0) {
-        const ctx = document.getElementById('featureImportanceChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Feature Importance',
-              data: values,
-              borderRadius: 6,
-              backgroundColor: 'rgba(88,166,255,0.9)',
-              borderColor: 'rgba(88,166,255,1)',
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { color: '#c9d1d9' },
-                grid: { color: 'rgba(255,255,255,0.03)' }
-              },
-              x: {
-                ticks: { color: '#c9d1d9' },
-                grid: { display: false }
-              }
-            },
-            plugins: {
-              legend: { display: false }
-            }
-          }
-        });
-      }
+    let req = await fetch("/predict", {
+        method: "POST",
+        body: formData
     });
 
-  {% endif %}
-});
+    let res = await req.json();
+
+    let output = document.getElementById("result");
+    output.style.display = "block";
+
+    if(res.status === "error"){
+        output.innerHTML = "<b>Error:</b> " + res.message;
+        return;
+    }
+
+    output.innerHTML = `
+        <h3>Prediction: ${res.prediction}</h3>
+        <p><b>Improvements:</b> ${res.improvements.join(", ")}</p>
+        <p><b>Weaknesses:</b> ${res.weaknesses.join(", ")}</p>
+        <p><b>Suggestions:</b> ${res.suggestions.join(", ")}</p>
+    `;
+};
 </script>
 
-</script>
 </body>
 </html>
