@@ -1,15 +1,11 @@
-from flask import Flask, request, redirect, url_for, flash, jsonify
+from flask import Flask, request, render_template, jsonify
 import joblib
 import pandas as pd
 import numpy as np
 import os
-from flask import send_from_directory
 
+# Get the directory where app.py is located
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-
-# Load HTML directly from root directory
-def render_index():
-    return send_from_directory(APP_ROOT, "index.html")
 
 # Path to your pickle file
 PKL_PATH = os.path.join(APP_ROOT, 'Sstudent_performance_classifier.pkl')
@@ -29,7 +25,7 @@ FORM_TO_MODEL = {
 
 FORM_FIELDS = list(FORM_TO_MODEL.keys())
 
-# ----------- Helper Text Functions -----------
+# ----------- Helper Text Functions (Preserved from original) -----------
 def improvement_text(g1, g2, g3):
     lines = []
     if g2 > g1:
@@ -95,32 +91,40 @@ def generate_suggestions(g1, g2, g3, studytime, failures, absences, traveltime, 
 
 # ----------- Load Model -----------
 if not os.path.exists(PKL_PATH):
-    raise FileNotFoundError(f"Model file not found at {PKL_PATH}")
-
-raw = joblib.load(PKL_PATH)
-
-if isinstance(raw, dict):
-    model = raw.get('model') or raw.get('clf') or raw.get('classifier')
-    scaler = raw.get('scaler')
-    features_model = raw.get('features') or FEATURE_ORDER_FALLBACK
-else:
-    model = raw
+    print(f"ERROR: Model file not found at {PKL_PATH}")
+    model = None
     scaler = None
     features_model = FEATURE_ORDER_FALLBACK
+else:
+    raw = joblib.load(PKL_PATH)
+    if isinstance(raw, dict):
+        model = raw.get('model') or raw.get('clf') or raw.get('classifier')
+        scaler = raw.get('scaler')
+        features_model = raw.get('features') or FEATURE_ORDER_FALLBACK
+    else:
+        model = raw
+        scaler = None
+        features_model = FEATURE_ORDER_FALLBACK
 
 features_model = list(features_model)
 
-app = Flask(__name__)
+# Initialize Flask
+# IMPORTANT: template_folder='templates' matches your folder structure
+app = Flask(__name__, template_folder='templates')
 app.secret_key = "secret-key"
 
-# ----------- Serve index.html directly -----------
+# ----------- Routes -----------
+
 @app.route('/')
 def index():
-    return render_index()
+    # Looks for 'index.html' inside the 'templates' folder
+    return render_template('index.html')
 
-# ----------- Prediction Route -----------
 @app.route('/predict', methods=['POST'])
 def predict():
+    if model is None:
+        return jsonify({"error": "Model file not loaded properly."})
+
     vals_model = {feat: 0.0 for feat in features_model}
 
     for form_name, model_key in FORM_TO_MODEL.items():
@@ -136,13 +140,12 @@ def predict():
 
     pred = model.predict(X_in)[0]
 
-    result = {
+    # Return result as JSON
+    return jsonify({
         "prediction": str(pred)
-    }
-
-    return result
+    })
 
 # ---------- Run App ----------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
