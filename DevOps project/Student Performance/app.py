@@ -1,151 +1,155 @@
 from flask import Flask, request, render_template, jsonify
-import joblib
-import pandas as pd
 import numpy as np
+import pandas as pd
+import joblib
 import os
 
-# Get the directory where app.py is located
+app = Flask(__name__, template_folder="templates")
+app.secret_key = "super-secret"
+
+# ------------------- MODEL PATH -------------------
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+MODEL_NAME = "Student_performance_classifier.pkl"
+MODEL_PATH = os.path.join(APP_ROOT, MODEL_NAME)
 
-# Path to your pickle file
-PKL_PATH = os.path.join(APP_ROOT, 'Sstudent_performance_classifier.pkl')
+print(f"[INFO] Loading model from: {MODEL_PATH}")
 
-FEATURE_ORDER_FALLBACK = ['G1','G2','G3','studytime','failures','absences','traveltime','freetime']
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError(f"Model file missing: {MODEL_PATH}")
 
-FORM_TO_MODEL = {
-    'MID-I Marks(0-15)': 'G1',
-    'MID-II Marks(0-15)': 'G2',
-    'Semister Marks(0-15)': 'G3',
-    'Studytime(1-5)': 'studytime',
-    'Failed(out of 3 exams)': 'failures',
-    'Absents(0-40)': 'absences',
-    'Traveltime(1-5)': 'traveltime',
-    'Freetime(1-5)': 'freetime'
-}
+model_data = joblib.load(MODEL_PATH)
 
-FORM_FIELDS = list(FORM_TO_MODEL.keys())
-
-# ----------- Helper Text Functions (Preserved from original) -----------
-def improvement_text(g1, g2, g3):
-    lines = []
-    if g2 > g1:
-        lines.append("Improved from Initial → Midterm")
-    elif g2 < g1:
-        lines.append("Declined from Initial → Midterm")
-    else:
-        lines.append("No change from Initial → Midterm")
-
-    if g3 > g2:
-        lines.append("Improved from Midterm → Final")
-    elif g3 < g2:
-        lines.append("Declined from Midterm → Final")
-    else:
-        lines.append("No change from Midterm → Final")
-
-    if g1>g3:
-        lines.append("Overall change from Initial → Final : Improved")
-    else:
-        lines.append("Overall change from Initial → Final : Not Improved")
-
-    return lines
-
-def detect_weaknesses(g1, g2, g3, studytime, failures, absences, traveltime, freetime):
-    weaknesses = []
-    if studytime < 2:
-        weaknesses.append("Low studytime")
-    if absences > 5:
-        weaknesses.append("High absences")
-    if failures > 0:
-        weaknesses.append("Has previous failures")
-    if g3 < g2:
-        weaknesses.append("Dropped performance from Midterm → Final")
-    if freetime > 3:
-        weaknesses.append("Too much freetime")
-    if traveltime > 2:
-        weaknesses.append("Long travel time")
-    if g1 <= 5:
-        weaknesses.append("Weak initial performance")
-    if not weaknesses:
-        weaknesses.append("No major weaknesses identified")
-    return weaknesses
-
-def generate_suggestions(g1, g2, g3, studytime, failures, absences, traveltime, freetime):
-    suggestions = []
-    if studytime < 2:
-        suggestions.append("Increase daily study to 2–3 hrs.")
-    if absences > 5:
-        suggestions.append("Improve attendance.")
-    if failures > 0:
-        suggestions.append("Revise weak topics weekly.")
-    if freetime > 3:
-        suggestions.append("Reduce unproductive time.")
-    if traveltime > 2:
-        suggestions.append("Use commute time for microlearning.")
-    if g3 < 10:
-        suggestions.append("Practice chapter tests regularly.")
-    if g2 > g1 and g3 >= g2:
-        suggestions.append("Great improvement — keep going!")
-    if not suggestions:
-        suggestions.append("Excellent — continue same habits.")
-    return suggestions
-
-# ----------- Load Model -----------
-if not os.path.exists(PKL_PATH):
-    print(f"ERROR: Model file not found at {PKL_PATH}")
-    model = None
-    scaler = None
-    features_model = FEATURE_ORDER_FALLBACK
+# If model saved as dict
+if isinstance(model_data, dict):
+    model = model_data.get("model") or model_data.get("classifier")
+    scaler = model_data.get("scaler")
+    features = model_data.get("features")
 else:
-    raw = joblib.load(PKL_PATH)
-    if isinstance(raw, dict):
-        model = raw.get('model') or raw.get('clf') or raw.get('classifier')
-        scaler = raw.get('scaler')
-        features_model = raw.get('features') or FEATURE_ORDER_FALLBACK
+    model = model_data
+    scaler = None
+    features = ['G1','G2','G3','studytime','failures','absences','traveltime','freetime']
+
+print("[INFO] Model loaded successfully!")
+
+
+# ------------------- DEFAULT EXPLANATIONS -------------------
+
+def generate_explanation(pred, G1, G2, G3, studytime):
+    improvements = []
+    weaknesses = []
+    suggestions = []
+
+    # Performance trend
+    if G1 == G2:
+        improvements.append("No change from Initial → Midterm")
     else:
-        model = raw
-        scaler = None
-        features_model = FEATURE_ORDER_FALLBACK
+        improvements.append("Marks improved from Initial → Midterm" if G2 > G1 else "Drop from Initial → Midterm")
 
-features_model = list(features_model)
+    if G2 == G3:
+        improvements.append("No change from Midterm → Final")
+    else:
+        improvements.append("Marks improved from Midterm → Final" if G3 > G2 else "Drop from Midterm → Final")
 
-# Initialize Flask
-# IMPORTANT: template_folder='templates' matches your folder structure
-app = Flask(__name__, template_folder='templates')
-app.secret_key = "secret-key"
+    if G1 == G3:
+        improvements.append("Overall change from Initial → Final : No change")
+    else:
+        improvements.append("Overall changed from Initial → Final : Improved" if G3 > G1 else "Overall drop from Initial → Final")
 
-# ----------- Routes -----------
+    # Weakness based on model
+    if studytime <= 2:
+        weaknesses.append("Low studytime")
+        suggestions.append("Increase daily study time to 2–3 hours.")
 
-@app.route('/')
-def index():
-    # Looks for 'index.html' inside the 'templates' folder
-    return render_template('index.html')
+    if G1 < 10:
+        weaknesses.append("Weak initial performance.")
+        suggestions.append("Practice chapter tests weekly.")
 
-@app.route('/predict', methods=['POST'])
+    weaknesses.append("Inconsistency in academic performance.")
+    suggestions.append("Follow a timetable regularly.")
+
+    return improvements, weaknesses, suggestions
+
+
+# ------------------- HOME ROUTE -------------------
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("index.html", result=None, input_vals=None, features=features)
+
+
+# ------------------- PREDICT ROUTE (POST ONLY) -------------------
+@app.route("/predict", methods=["POST"])
 def predict():
-    if model is None:
-        return jsonify({"error": "Model file not loaded properly."})
+    try:
+        input_vals = {}
 
-    vals_model = {feat: 0.0 for feat in features_model}
+        # extract form values
+        for f in features:
+            raw = request.form.get(f, "0")
+            try:
+                input_vals[f] = float(raw)
+            except:
+                input_vals[f] = 0.0
 
-    for form_name, model_key in FORM_TO_MODEL.items():
-        raw_val = request.form.get(form_name) or "0"
-        vals_model[model_key] = float(raw_val)
+        # Create DataFrame
+        row = pd.DataFrame([[input_vals[f] for f in features]], columns=features)
 
-    row_df = pd.DataFrame([[vals_model[f] for f in features_model]], columns=features_model)
+        # scale if scaler exists
+        if scaler:
+            X = scaler.transform(row)
+        else:
+            X = row.values
 
-    if scaler:
-        X_in = scaler.transform(row_df)
-    else:
-        X_in = row_df.values.astype(float)
+        # prediction
+        pred = model.predict(X)[0]
+        pred = str(pred)
 
-    pred = model.predict(X_in)[0]
+        # explanation engine
+        improvements, weaknesses, suggestions = generate_explanation(
+            pred,
+            input_vals['G1'],
+            input_vals['G2'],
+            input_vals['G3'],
+            input_vals['studytime']
+        )
 
-    # Return result as JSON
-    return jsonify({
-        "prediction": str(pred)
-    })
+        result_data = {
+            "prediction": pred,
+            "improvements": improvements,
+            "weaknesses": weaknesses,
+            "suggestions": suggestions
+        }
 
-# ---------- Run App ----------
+        return render_template(
+            "index.html",
+            result=result_data,
+            input_vals=input_vals,
+            features=features
+        )
+
+    except Exception as e:
+        print("Prediction error:", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ------------------- API ENDPOINT (IF REQUIRED) -------------------
+@app.route("/api/predict", methods=["POST"])
+def api_predict():
+    try:
+        data = request.json
+        row = [data.get(f, 0) for f in features]
+
+        df = pd.DataFrame([row], columns=features)
+        X = scaler.transform(df) if scaler else df.values
+        pred = str(model.predict(X)[0])
+
+        return jsonify({"prediction": pred})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+# ------------------- RUN SERVER -------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    print(f"[INFO] Starting server on port {port}")
+    app.run(host="0.0.0.0", port=port)
